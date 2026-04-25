@@ -1,0 +1,40 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.lock.json
+*.nuspec
+TestResults/
+coverage/
+*.trx
+*.xml
+*.nupkg
+
+## Secrets
+appsettings.*.json
+!appsettings.Development.json
+!appsettings.json
+.env
+*.env
+secrets/
+
+## Docker
+docker-compose.override.yml
+
+## OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+## IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+## Test artifacts
+*.coverage
+*.coveragexml
