@@ -1,7 +1,7 @@
 # ADR-0004: CQRS — Separacao de Write e Read Models
 
 - **Status**: Accepted
-- **Data**: 2026-04-23
+- **Data**: 2026-04-25
 - **Decisores**: Arquiteto de Solucoes
 
 ## Contexto
