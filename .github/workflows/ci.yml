@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION: 'Daily-Cash-Flow.sln'
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Format check
+        run: dotnet format ${{ env.SOLUTION }} --verify-no-changes
+
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION }} --no-restore -c Release
+
+      - name: Unit tests
+        run: |
+          dotnet test tests/CashFlow.Transactions.UnitTests \
+            --no-build -c Release \
+            --logger "trx;LogFileName=unit-tx.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory coverage/tx
+
+          dotnet test tests/CashFlow.Consolidation.UnitTests \
+            --no-build -c Release \
+            --logger "trx;LogFileName=unit-cons.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory coverage/cons
+
+      - name: Publish coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          directory: coverage
+          flags: unit
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/**/*.trx
+            coverage/**/coverage.cobertura.xml
+
+  lint-docker:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hadolint (Transactions API)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: source/CashFlow.Transactions.Api/Dockerfile
+          failure-threshold: error
+      - name: Hadolint (Consolidation API)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: source/CashFlow.Consolidation.Api/Dockerfile
+          failure-threshold: error
+      - name: Hadolint (Service)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: source/CashFlow.Consolidation.Service/Dockerfile
+          failure-threshold: error
+      - name: Hadolint (Gateway)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: source/CashFlow.Gateway/Dockerfile
+          failure-threshold: error
