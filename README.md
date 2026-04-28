@@ -29,6 +29,7 @@ O histórico de commits na branch `main` reflete o progresso incremental do dese
 - [Stack Tecnológica](#stack-tecnológica)
 - [Pré-requisitos](#pré-requisitos)
 - [Como Rodar Localmente](#como-rodar-localmente)
+- [Como Testar Manualmente](#como-testar-manualmente)
 - [Serviços e Endpoints](#serviços-e-endpoints)
 - [Observabilidade](#observabilidade)
 - [Comandos Úteis de Operação](#comandos-úteis-de-operação)
@@ -212,6 +213,134 @@ docker compose -f infra/docker-compose.yml down
 
 # Parar e remover todos os volumes (ambiente limpo)
 docker compose -f infra/docker-compose.yml down -v
+```
+
+---
+
+## Como Testar Manualmente
+
+Você pode validar o sistema de duas formas: via Swagger (rápido para explorar endpoints) e via Postman (fluxo mais real passando pelo Gateway).
+
+### 1. Acesse as aplicações de suporte
+
+- Keycloak: `http://localhost:8081`
+- Transactions Swagger: `http://localhost:5001/swagger`
+- Consolidation Swagger: `http://localhost:5002/swagger`
+- Gateway: `http://localhost:5000`
+- RabbitMQ UI: `http://localhost:15672`
+
+### 2. Gere um token JWT no Keycloak
+
+Use o endpoint:
+
+`POST http://localhost:8081/realms/cashflow/protocol/openid-connect/token`
+
+Com body `x-www-form-urlencoded`:
+
+- `grant_type=password`
+- `client_id=cashflow-frontend`
+- `username=merchant1`
+- `password=merchant1`
+
+Exemplo com curl:
+
+```bash
+curl --location "http://localhost:8081/realms/cashflow/protocol/openid-connect/token" \
+--header "Content-Type: application/x-www-form-urlencoded" \
+--data-urlencode "grant_type=password" \
+--data-urlencode "client_id=cashflow-frontend" \
+--data-urlencode "username=merchant1" \
+--data-urlencode "password=merchant1"
+```
+
+Copie o valor de `access_token`.
+
+### 3. Teste via Swagger (em cada API)
+
+1. Abra `http://localhost:5001/swagger` (Transactions API).
+2. Clique em **Authorize** e informe: `Bearer SEU_ACCESS_TOKEN`.
+3. Execute `POST /transactions/` com payload:
+
+```json
+{
+  "type": "Credit",
+  "amount": 150.75,
+  "occurredOn": "2026-04-28T12:00:00Z",
+  "currency": "BRL",
+  "description": "Venda teste"
+}
+```
+
+4. Envie também o header `Idempotency-Key: test-001`.
+5. Guarde o `id` retornado e valide:
+   - `GET /transactions/{id}`
+   - `POST /transactions/{id}/reverse` (opcional)
+
+Depois, abra `http://localhost:5002/swagger` e repita o **Authorize** com o mesmo token para testar:
+
+- `GET /balance/{merchantId}?date=2026-04-28`
+- `GET /balance/{merchantId}/range?from=2026-04-01&to=2026-04-28`
+
+Use este `merchantId` para `merchant1`:
+
+`550e8400-e29b-41d4-a716-446655440001`
+
+### 4. Teste via Postman (fluxo via Gateway)
+
+Configure o header em todas as requisições:
+
+`Authorization: Bearer {{token}}`
+
+#### 4.1 Criar transação
+
+`POST http://localhost:5000/transactions/`
+
+Headers:
+
+- `Authorization: Bearer {{token}}`
+- `Content-Type: application/json`
+- `Idempotency-Key: test-001`
+
+Body:
+
+```json
+{
+  "type": "Credit",
+  "amount": 150.75,
+  "occurredOn": "2026-04-28T12:00:00Z",
+  "currency": "BRL",
+  "description": "Venda teste gateway"
+}
+```
+
+#### 4.2 Consultar transação
+
+`GET http://localhost:5000/transactions/{{transactionId}}`
+
+#### 4.3 Consultar saldo diário
+
+`GET http://localhost:5000/balance/550e8400-e29b-41d4-a716-446655440001?date=2026-04-28`
+
+#### 4.4 Consultar saldo por período
+
+`GET http://localhost:5000/balance/550e8400-e29b-41d4-a716-446655440001/range?from=2026-04-01&to=2026-04-28`
+
+### 5. Checklist de validação
+
+- Sem token, endpoints de negócio devem retornar `401`.
+- Criação de transação deve retornar `201`.
+- Consulta da transação deve retornar `200`.
+- Saldo deve refletir o evento após processamento assíncrono.
+- Requisição repetida com mesma `Idempotency-Key` não deve duplicar transação.
+
+### 6. Diagnóstico rápido (se algo falhar)
+
+```bash
+docker compose -f infra/docker-compose.yml logs -f
+docker compose -f infra/docker-compose.yml logs -f gateway
+docker compose -f infra/docker-compose.yml logs -f transactions-api
+docker compose -f infra/docker-compose.yml logs -f consolidation-service
+docker compose -f infra/docker-compose.yml logs -f consolidation-api
 ```
 
 ---
