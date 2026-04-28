@@ -14,7 +14,7 @@ flowchart LR
             gw[API Gateway]
             tx[Transactions API]
             cons[Consolidation API]
-            wk[Consolidation Worker]
+            wk[Consolidation Service]
             mq[RabbitMQ]
             txDb[(Postgres TX)]
             consDb[(Postgres Cons)]
@@ -86,7 +86,7 @@ flowchart TB
             gwRs[Gateway<br/>Deployment x3]
             txRs[Tx API<br/>Deployment x3]
             consApiRs[Cons API<br/>Deployment x3]
-            consWkRs[Cons Worker<br/>Deployment x3]
+            consWkRs[Cons Service<br/>Deployment x3]
         end
         subgraph obs [namespace: observability]
             otelDs[OTel Collector<br/>DaemonSet]
@@ -172,7 +172,7 @@ flowchart LR
 | Gateway | 3 | 250m/1000m | 256Mi/512Mi | CPU 60% |
 | Tx API | 3-10 | 500m/2000m | 512Mi/1Gi | CPU 60% + RPS |
 | Cons API | 3-10 | 500m/2000m | 512Mi/1Gi | CPU 60% + RPS |
-| Cons Worker | 3-8 | 500m/1000m | 512Mi/1Gi | queue depth |
+| Cons Service | 3-8 | 500m/1000m | 512Mi/1Gi | queue depth |
 
 ### Estrategias de Seguranca Adicionais (producao)
 

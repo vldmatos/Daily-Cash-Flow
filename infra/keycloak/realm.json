@@ -1,0 +1,101 @@
+{
+  "realm": "cashflow",
+  "enabled": true,
+  "displayName": "CashFlow",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "cashflow-api",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "cashflow-api-secret",
+      "bearerOnly": false,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "cashflow-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:*", "http://127.0.0.1:*"],
+      "webOrigins": ["*"]
+    }
+  ],
+  "users": [
+    {
+      "username": "merchant1",
+      "enabled": true,
+      "email": "merchant1@cashflow.local",
+      "firstName": "Merchant",
+      "lastName": "One",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "merchant1",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "merchantId": ["550e8400-e29b-41d4-a716-446655440001"]
+      },
+      "realmRoles": ["merchant"]
+    },
+    {
+      "username": "merchant2",
+      "enabled": true,
+      "email": "merchant2@cashflow.local",
+      "firstName": "Merchant",
+      "lastName": "Two",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "merchant2",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "merchantId": ["550e8400-e29b-41d4-a716-446655440002"]
+      },
+      "realmRoles": ["merchant"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "merchant",
+        "description": "Merchant user role"
+      }
+    ]
+  },
+  "protocolMappers": [
+    {
+      "name": "merchantId-mapper",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "merchantId",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "merchantId",
+        "jsonType.label": "String"
+      }
+    }
+  ],
+  "accessTokenLifespan": 900,
+  "ssoSessionMaxLifespan": 86400
+}

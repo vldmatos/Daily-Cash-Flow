@@ -1,1 +1,11 @@
-<Solution />
+<Solution>
+  <Project Path="CashFlow.Consolidation.Api/CashFlow.Consolidation.Api.csproj" />
+  <Project Path="CashFlow.Consolidation.Domain/CashFlow.Consolidation.Domain.csproj" />
+  <Project Path="CashFlow.Consolidation.Infrastructure/CashFlow.Consolidation.Infrastructure.csproj" />
+  <Project Path="CashFlow.Consolidation.Service/CashFlow.Consolidation.Service.csproj" />
+  <Project Path="CashFlow.Gateway/CashFlow.Gateway.csproj" />
+  <Project Path="CashFlow.Shared.Contracts/CashFlow.Shared.Contracts.csproj" />
+  <Project Path="CashFlow.Transactions.Api/CashFlow.Transactions.Api.csproj" />
+  <Project Path="CashFlow.Transactions.Domain/CashFlow.Transactions.Domain.csproj" />
+  <Project Path="CashFlow.Transactions.Infrastructure/CashFlow.Transactions.Infrastructure.csproj" />
+</Solution>

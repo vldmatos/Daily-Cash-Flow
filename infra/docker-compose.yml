@@ -1,0 +1,275 @@
+name: cashflow
+
+services:
+
+  # ── Databases ──────────────────────────────────────────────────────────────
+  postgres-tx:
+    image: postgres:16-alpine
+    container_name: postgres-tx
+    environment:
+      POSTGRES_DB: cashflow_tx
+      POSTGRES_USER: cashflow
+      POSTGRES_PASSWORD: cashflow_secret
+    volumes:
+      - postgres-tx-data:/var/lib/postgresql/data
+      - ./postgres/init-transactions.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashflow -d cashflow_tx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cashflow-net
+
+  postgres-cons:
+    image: postgres:16-alpine
+    container_name: postgres-cons
+    environment:
+      POSTGRES_DB: cashflow_cons
+      POSTGRES_USER: cashflow
+      POSTGRES_PASSWORD: cashflow_secret
+    volumes:
+      - postgres-cons-data:/var/lib/postgresql/data
+      - ./postgres/init-consolidation.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashflow -d cashflow_cons"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cashflow-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - cashflow-net
+
+  # ── Message Broker ─────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cashflow-net
+
+  # ── Identity Provider ──────────────────────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: dev-mem
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/cashflow || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    networks:
+      - cashflow-net
+
+  # ── Application Services ───────────────────────────────────────────────────
+  transactions-api:
+    build:
+      context: ..
+      dockerfile: source/CashFlow.Transactions.Api/Dockerfile
+    container_name: transactions-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TransactionsDb: "Host=postgres-tx;Port=5432;Database=cashflow_tx;Username=cashflow;Password=cashflow_secret"
+      RabbitMq__Host: "rabbitmq://guest:guest@rabbitmq/"
+      Auth__Authority: "http://keycloak:8080/realms/cashflow"
+      Otel__Endpoint: "http://otel-collector:4317"
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres-tx:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - cashflow-net
+
+  consolidation-api:
+    build:
+      context: ..
+      dockerfile: source/CashFlow.Consolidation.Api/Dockerfile
+    container_name: consolidation-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ConsolidationDb: "Host=postgres-cons;Port=5432;Database=cashflow_cons;Username=cashflow;Password=cashflow_secret"
+      Redis__ConnectionString: "redis:6379"
+      Auth__Authority: "http://keycloak:8080/realms/cashflow"
+      Otel__Endpoint: "http://otel-collector:4317"
+    ports:
+      - "5002:8080"
+    depends_on:
+      postgres-cons:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - cashflow-net
+
+  consolidation-service:
+    build:
+      context: ..
+      dockerfile: source/CashFlow.Consolidation.Service/Dockerfile
+    container_name: consolidation-service
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__ConsolidationDb: "Host=postgres-cons;Port=5432;Database=cashflow_cons;Username=cashflow;Password=cashflow_secret"
+      Redis__ConnectionString: "redis:6379"
+      RabbitMq__Host: "rabbitmq://guest:guest@rabbitmq/"
+      Otel__Endpoint: "http://otel-collector:4317"
+    depends_on:
+      postgres-cons:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashflow-net
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: source/CashFlow.Gateway/Dockerfile
+    container_name: gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Auth__Authority: "http://keycloak:8080/realms/cashflow"
+      Otel__Endpoint: "http://otel-collector:4317"
+    ports:
+      - "5000:8080"
+    depends_on:
+      transactions-api:
+        condition: service_healthy
+      consolidation-api:
+        condition: service_healthy
+    networks:
+      - cashflow-net
+
+  # ── Observability Stack ────────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+    depends_on:
+      - prometheus
+      - seq
+    networks:
+      - cashflow-net
+      - obs-net
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - obs-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - obs-net
+
+  seq:
+    image: datalust/seq:2024.1
+    container_name: seq
+    environment:
+      ACCEPT_EULA: "Y"
+    volumes:
+      - seq-data:/data
+    ports:
+      - "5341:80"
+    networks:
+      - obs-net
+      - cashflow-net
+
+volumes:
+  postgres-tx-data:
+  postgres-cons-data:
+  redis-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+  seq-data:
+
+networks:
+  cashflow-net:
+    driver: bridge
+  obs-net:
+    driver: bridge

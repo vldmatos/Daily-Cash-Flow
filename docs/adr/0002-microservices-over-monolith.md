@@ -32,7 +32,7 @@ Alternativas consideradas:
 - `Transactions` (write side, core)
 - `Consolidation` (read side, supporting)
 
-Mais servicos transversais (Gateway, Workers, stack observabilidade, IdP).
+Mais servicos transversais (Gateway, Services, stack observabilidade, IdP).
 
 Comunicacao **exclusivamente assincrona** via broker para prover o isolamento de falhas exigido.
 

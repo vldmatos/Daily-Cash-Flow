@@ -71,7 +71,7 @@ flowchart LR
     facade -->|GET /balance 90%| legacy
     legacy --> sql[(SQL Server)]
     sql -- CDC --> bus{{Kafka/Debezium}}
-    bus --> newWorker[Consolidation Worker<br/>NEW]
+    bus --> newWorker[Consolidation Service<br/>NEW]
     newWorker --> pg[(Postgres<br/>NEW)]
     newWorker --> redis[(Redis<br/>NEW)]
     newCons --> redis
@@ -105,7 +105,7 @@ flowchart TB
     newTx --> bus{{RabbitMQ}}
     bus --> acl[Anti-Corruption Layer<br/>NEW]
     acl -- replay evento --> sql[(SQL Server<br/>LEGACY)]
-    bus --> newWorker[Consolidation<br/>Worker NEW]
+    bus --> newWorker[Consolidation<br/>Service NEW]
     legacy[Legacy Monolith] --> sql
     facade -->|outras rotas| legacy
 ```
@@ -134,7 +134,7 @@ flowchart LR
     facade --> newTx[Transactions API]
     facade --> newCons[Consolidation API]
     newTx --> bus{{RabbitMQ}}
-    bus --> newWorker[Consolidation Worker]
+    bus --> newWorker[Consolidation Service]
     newTx --> pgNew[(Postgres)]
     newWorker --> pgCons[(Postgres)]
     newWorker --> redis[(Redis)]

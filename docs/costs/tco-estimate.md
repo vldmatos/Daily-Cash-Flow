@@ -129,7 +129,7 @@ Rodando inteiramente em Docker Compose em maquina de desenvolvedor — **USD 0 d
 
 1. **Reserved Instances / Savings Plans**: 1 ou 3 anos de compromisso reduz ate **72%** em VM e DB (Azure Reserved / AWS SP).
 2. **Autoscaling ativo**: dimensionamento por HPA baseado em RPS + schedule scaling para horarios de pouco uso (madrugada).
-3. **Spot/Preemptible Nodes** para workers de consolidation (idempotentes, tolerantes a interrupcao). Economiza ate 90%.
+3. **Spot/Preemptible Nodes** para services de consolidation (idempotentes, tolerantes a interrupcao). Economiza ate 90%.
 4. **Query tuning Postgres**: menos conexoes simultaneas, PgBouncer em frente.
 5. **Cache agressivo no read path**: cada cache hit economiza 1 query no DB.
 6. **Dados frios para Blob/S3**: outbox > 30d, logs > 90d, lancamentos > 1 ano em cold tier.

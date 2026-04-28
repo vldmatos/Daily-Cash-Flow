@@ -1,0 +1,57 @@
+{
+  "uid": "service-overview",
+  "title": "CashFlow - Service Overview",
+  "tags": ["cashflow"],
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate (RPS) by Service",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(cashflow_http_server_request_duration_seconds_count[1m])) by (service_name)",
+          "legendFormat": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Error Rate (5xx) by Service",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(cashflow_http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) by (service_name)",
+          "legendFormat": "{{service_name}} errors"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "P95 Latency by Service",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(cashflow_http_server_request_duration_seconds_bucket[5m])) by (le, service_name))",
+          "legendFormat": "p95 {{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Outbox Pending Messages",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "cashflow_outbox_pending",
+          "legendFormat": "Outbox Pending"
+        }
+      ]
+    }
+  ]
+}
