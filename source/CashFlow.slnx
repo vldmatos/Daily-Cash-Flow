@@ -1,11 +1,19 @@
 <Solution>
-  <Project Path="CashFlow.Consolidation.Api/CashFlow.Consolidation.Api.csproj" />
-  <Project Path="CashFlow.Consolidation.Domain/CashFlow.Consolidation.Domain.csproj" />
-  <Project Path="CashFlow.Consolidation.Infrastructure/CashFlow.Consolidation.Infrastructure.csproj" />
-  <Project Path="CashFlow.Consolidation.Service/CashFlow.Consolidation.Service.csproj" />
-  <Project Path="CashFlow.Gateway/CashFlow.Gateway.csproj" />
-  <Project Path="CashFlow.Shared.Contracts/CashFlow.Shared.Contracts.csproj" />
-  <Project Path="CashFlow.Transactions.Api/CashFlow.Transactions.Api.csproj" />
-  <Project Path="CashFlow.Transactions.Domain/CashFlow.Transactions.Domain.csproj" />
-  <Project Path="CashFlow.Transactions.Infrastructure/CashFlow.Transactions.Infrastructure.csproj" />
+  <Folder Name="/Projects/">
+    <Project Path="CashFlow.Consolidation.Api/CashFlow.Consolidation.Api.csproj" />
+    <Project Path="CashFlow.Consolidation.Domain/CashFlow.Consolidation.Domain.csproj" />
+    <Project Path="CashFlow.Consolidation.Infrastructure/CashFlow.Consolidation.Infrastructure.csproj" />
+    <Project Path="CashFlow.Consolidation.Service/CashFlow.Consolidation.Service.csproj" />
+    <Project Path="CashFlow.Gateway/CashFlow.Gateway.csproj" />
+    <Project Path="CashFlow.Shared.Contracts/CashFlow.Shared.Contracts.csproj" />
+    <Project Path="CashFlow.Transactions.Api/CashFlow.Transactions.Api.csproj" />
+    <Project Path="CashFlow.Transactions.Domain/CashFlow.Transactions.Domain.csproj" />
+    <Project Path="CashFlow.Transactions.Infrastructure/CashFlow.Transactions.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="../tests/CashFlow.Consolidation.IntegrationTests/CashFlow.Consolidation.IntegrationTests.csproj" />
+    <Project Path="../tests/CashFlow.Consolidation.UnitTests/CashFlow.Consolidation.UnitTests.csproj" />
+    <Project Path="../tests/CashFlow.Transactions.IntegrationTests/CashFlow.Transactions.IntegrationTests.csproj" />
+    <Project Path="../tests/CashFlow.Transactions.UnitTests/CashFlow.Transactions.UnitTests.csproj" />
+  </Folder>
 </Solution>

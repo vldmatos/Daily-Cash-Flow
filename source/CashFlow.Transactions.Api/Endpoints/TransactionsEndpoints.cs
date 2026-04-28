@@ -53,8 +53,15 @@ public static class TransactionsEndpoints
             IdempotencyKey = idempotencyKey
         };
 
-        var result = await mediator.Send(command, ct);
-        return Results.Created($"/transactions/{result.Id}", result);
+        try
+        {
+            var result = await mediator.Send(command, ct);
+            return Results.Created($"/transactions/{result.Id}", result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
     }
 
     private static async Task<IResult> GetTransaction(
