@@ -38,7 +38,9 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CashFlow Consolidation API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Type = SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT"
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
     c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {

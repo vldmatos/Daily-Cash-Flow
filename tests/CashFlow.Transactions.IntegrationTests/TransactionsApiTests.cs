@@ -42,7 +42,7 @@ public sealed class TransactionsApiTests : IAsyncLifetime
                 builder.UseSetting("Auth:Authority", "");
                 builder.UseSetting("Otel:Endpoint", "http://localhost:4317");
             })
-            .WithWebHostBuilder(builder => 
+            .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(services =>
                 {

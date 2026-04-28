@@ -42,7 +42,7 @@ public sealed class ConsolidationApiTests : IAsyncLifetime
                 builder.UseSetting("Redis:ConnectionString", _redis.GetConnectionString());
                 builder.UseSetting("Auth:Authority", "");
                 builder.UseSetting("Otel:Endpoint", "http://localhost:4317");
-                
+
                 builder.ConfigureTestServices(services =>
                 {
                     services.AddAuthentication(FakeJwtBearerDefaults.AuthenticationScheme).AddFakeJwtBearer();
@@ -93,7 +93,7 @@ public sealed class ConsolidationApiTests : IAsyncLifetime
     public async Task GetDailyBalance_NoTransactions_ReturnsZeroBalance()
     {
         var response = await _client!.GetAsync($"/balance/{_merchantId}");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var body = await response.Content.ReadFromJsonAsync<BalanceResponse>();

@@ -9,6 +9,7 @@ on:
 env:
   DOTNET_VERSION: '10.0.x'
   SOLUTION: 'Daily-Cash-Flow.sln'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-test:
@@ -61,6 +62,7 @@ jobs:
         if: always()
         with:
           name: test-results
+          if-no-files-found: warn
           path: |
             coverage/**/*.trx
             coverage/**/coverage.cobertura.xml
